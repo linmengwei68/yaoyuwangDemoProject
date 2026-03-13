@@ -1,25 +1,30 @@
-FROM node:18-alpine
+FROM node:18-alpine AS builder
+
+# Prisma 在 Alpine 上需要 OpenSSL 和 libc 兼容层
+RUN apk add --no-cache openssl libc6-compat
 
 WORKDIR /app
 
-# 复制依赖文件
 COPY package.json package-lock.json ./
 COPY prisma ./prisma/
 
-# 安装依赖
 RUN npm ci
-
-# 生成 Prisma Client
 RUN npx prisma generate
 
-# 复制源代码
 COPY . .
-
-# 编译 TypeScript
 RUN npm run build
 
-# 暴露端口
+# --- 生产阶段 ---
+FROM node:18-alpine
+
+RUN apk add --no-cache openssl libc6-compat
+
+WORKDIR /app
+
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+
 EXPOSE 3001
 
-# 启动
 CMD ["node", "dist/main.js"]
