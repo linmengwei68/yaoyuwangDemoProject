@@ -10,6 +10,9 @@ node_modules/
 .next/
 dist/
 
+# local PostgreSQL
+.postgres/
+
 # OS files
 .DS_Store
 Thumbs.db
