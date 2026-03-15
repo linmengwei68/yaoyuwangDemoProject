@@ -32,6 +32,7 @@ export default function LeftMenu() {
         { key: '/admin/users', label: t.nav.users },
         { key: '/admin/roles', label: t.nav.roles },
         { key: '/admin/permissions', label: t.nav.permissions },
+        { key: '/admin/dictionary', label: t.nav.dictionary },
       ],
     },
   ];

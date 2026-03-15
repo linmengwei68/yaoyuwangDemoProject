@@ -9,6 +9,11 @@ import { UsersModule } from './users/users.module';
 import { DictionaryModule } from './dictionary/dictionary.module';
 import { AuditTrailModule } from './audit-trail/audit-trail.module';
 import { PermissionsModule } from './permissions/permissions.module';
+import { JobPostTemplateModule } from './job-post-template/job-post-template.module';
+import { JobPostModule } from './job-post/job-post.module';
+import { ApplicantInfoModule } from './applicant-info/applicant-info.module';
+import { UploadModule } from './upload/upload.module';
+import { ApplicationModule } from './application/application.module';
 
 @Module({
   imports: [
@@ -20,6 +25,11 @@ import { PermissionsModule } from './permissions/permissions.module';
     DictionaryModule,
     AuditTrailModule,
     PermissionsModule,
+    JobPostTemplateModule,
+    JobPostModule,
+    ApplicantInfoModule,
+    UploadModule,
+    ApplicationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

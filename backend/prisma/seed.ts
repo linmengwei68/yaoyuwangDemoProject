@@ -31,6 +31,7 @@ async function main() {
     'edit-user',
     'view-admin',
     'edit-role',
+    'template-edit',
   ];
 
   for (const name of permissions) {

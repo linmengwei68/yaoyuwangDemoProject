@@ -29,7 +29,7 @@ export interface DataTableResult<T> {
   pageSize: number;
 }
 
-export type ColumnType = 'input' | 'numberInput' | 'select' | 'multipleSelection' | 'datepicker';
+export type ColumnType = 'input' | 'numberInput' | 'select' | 'multipleSelection' | 'selectInput' | 'datepicker';
 
 export interface DataTableColumnConfig<T> {
   title: string;
@@ -125,17 +125,43 @@ export default function DataTable<T extends Record<string, any>>({
   });
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const calcScrollY = useCallback(() => {
+    if (!containerRef.current) return;
+    // Find the nearest scrollable parent container
+    let scrollParent: HTMLElement | null = containerRef.current.parentElement;
+    while (scrollParent && scrollParent !== document.body) {
+      const overflow = getComputedStyle(scrollParent).overflowY;
+      if (overflow === 'auto' || overflow === 'scroll') break;
+      scrollParent = scrollParent.parentElement;
+    }
+    const parentBottom = scrollParent?.getBoundingClientRect().bottom ?? window.innerHeight;
+    // Measure from the actual table body top (accounts for title bar, filters, table header)
+    const tableBody = containerRef.current.querySelector('.ant-table-body');
+    if (tableBody) {
+      const bodyTop = tableBody.getBoundingClientRect().top;
+      const pagination = containerRef.current.querySelector('.ant-table-pagination');
+      const paginationHeight = pagination
+        ? pagination.getBoundingClientRect().height + parseFloat(getComputedStyle(pagination).marginTop || '0') + parseFloat(getComputedStyle(pagination).marginBottom || '0')
+        : 0;
+      // 24px = container bottom padding (p-6)
+      setScrollY(Math.max(200, parentBottom - bodyTop - paginationHeight - 24));
+      return;
+    }
+    // Fallback before table renders
+    const containerTop = containerRef.current.getBoundingClientRect().top;
+    setScrollY(Math.max(200, parentBottom - containerTop - 200));
+  }, []);
+
   useEffect(() => {
-    const calcScrollY = () => {
-      if (!containerRef.current) return;
-      const top = containerRef.current.getBoundingClientRect().top;
-      // 24px bottom padding buffer
-      setScrollY(Math.max(200, window.innerHeight - top - 24));
-    };
     calcScrollY();
     window.addEventListener('resize', calcScrollY);
     return () => window.removeEventListener('resize', calcScrollY);
-  }, []);
+  }, [calcScrollY]);
+
+  // Recalculate when table DOM changes (loading finished, filters toggled)
+  useEffect(() => {
+    requestAnimationFrame(calcScrollY);
+  }, [loading, params.filters, calcScrollY]);
 
   // Measure column widths from rendered DOM
   const measureColWidths = useCallback(() => {
@@ -330,7 +356,7 @@ export default function DataTable<T extends Record<string, any>>({
   });
 
   return (
-    <div ref={containerRef} className="p-6 bg-white min-h-full">
+    <div ref={containerRef} className="p-6 bg-white h-full flex flex-col">
       <style>{`
         .data-table .ant-table table {
           table-layout: auto !important;
@@ -392,24 +418,26 @@ export default function DataTable<T extends Record<string, any>>({
           </Button>
         </div>
       )}
-      <Table
-        className="data-table"
-        rowKey={rowKey}
-        columns={columns}
-        dataSource={list}
-        loading={loading}
-        onChange={handleTableChange}
-        scroll={{ x: colWidths.length ? colWidths.reduce((a, b) => a + b, 0) : '100%', y: scrollY }}
-        pagination={{
-          current: params.page,
-          pageSize: params.pageSize,
-          total,
-          showSizeChanger: true,
-          showTotal: totalLabel
-            ? () => totalLabel.replace('{count}', String(total))
-            : undefined,
-        }}
-      />
+      <div className="flex-1 min-h-0">
+        <Table
+          className="data-table"
+          rowKey={rowKey}
+          columns={columns}
+          dataSource={list}
+          loading={loading}
+          onChange={handleTableChange}
+          scroll={{ x: colWidths.length ? colWidths.reduce((a, b) => a + b, 0) : '100%', y: scrollY }}
+          pagination={{
+            current: params.page,
+            pageSize: params.pageSize,
+            total,
+            showSizeChanger: true,
+            showTotal: totalLabel
+              ? () => totalLabel.replace('{count}', String(total))
+              : undefined,
+          }}
+        />
+      </div>
     </div>
   );
 }

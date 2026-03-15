@@ -135,6 +135,17 @@ export default function PartnerHubColumn({
             options={options}
             style={{ width: '100%' }}
           />
+        ) : type === 'selectInput' ? (
+          <Select
+            autoFocus
+            mode="tags"
+            size="small"
+            value={editValue}
+            onChange={(v) => setEditValue(v)}
+            options={options}
+            tokenSeparators={[',']}
+            style={{ width: '100%' }}
+          />
         ) : type === 'datepicker' ? (
           <DatePicker
             autoFocus

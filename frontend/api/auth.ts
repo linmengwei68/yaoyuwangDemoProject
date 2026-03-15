@@ -54,7 +54,10 @@ export async function fetchCurrentUser(): Promise<User | null> {
   }
 }
 
+let _loggingOut = false;
 export function logout(saveRedirect = true) {
+  if (_loggingOut) return;
+  _loggingOut = true;
   sessionStorage.removeItem('access_token');
   useAppStore.getState().setCurrentUser(null);
   if (saveRedirect) {

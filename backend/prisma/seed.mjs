@@ -31,6 +31,9 @@ async function main() {
     'edit-user',
     'view-admin',
     'edit-role',
+    'template-edit',
+    'edit-dictionary',
+    'post-edit',
   ];
 
   for (const name of permissions) {
@@ -47,6 +50,38 @@ async function main() {
   }
 
   console.log('Seeded permissions:', permissions);
+
+  // Clean up orphan permissions not in the list
+  await prisma.permission.deleteMany({
+    where: { name: { notIn: permissions } },
+  });
+
+  // Seed country and state dictionaries
+  const countryStateMap = {
+    'Australia': ['New South Wales', 'Victoria', 'Queensland', 'Western Australia', 'South Australia', 'Tasmania', 'Northern Territory', 'Australian Capital Territory'],
+    'United States': ['California', 'New York', 'Texas', 'Florida', 'Illinois', 'Pennsylvania', 'Ohio', 'Georgia', 'Washington', 'Massachusetts'],
+    'Canada': ['Ontario', 'Quebec', 'British Columbia', 'Alberta', 'Manitoba', 'Saskatchewan', 'Nova Scotia', 'New Brunswick'],
+    'United Kingdom': ['England', 'Scotland', 'Wales', 'Northern Ireland'],
+    'New Zealand': ['Auckland', 'Wellington', 'Canterbury', 'Waikato', 'Bay of Plenty', 'Otago'],
+  };
+
+  const countries = Object.keys(countryStateMap);
+  await prisma.dictionary.upsert({
+    where: { key: 'country' },
+    update: { value: countries, category: 'template' },
+    create: { key: 'country', value: countries, category: 'template' },
+  });
+
+  for (const [country, states] of Object.entries(countryStateMap)) {
+    const stateKey = `state_${country}`;
+    await prisma.dictionary.upsert({
+      where: { key: stateKey },
+      update: { value: states, category: 'template' },
+      create: { key: stateKey, value: states, category: 'template' },
+    });
+  }
+
+  console.log('Seeded country/state dictionaries');
 }
 
 main()

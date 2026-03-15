@@ -5,6 +5,7 @@ import Providers from "./providers";
 import AuthGuard from "@/components/common/auth-guard";
 import Navigation from "@/components/layout/navigation";
 import LeftMenu from "@/components/layout/left-menu";
+import AppBreadcrumb from "@/components/layout/breadcrumb";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 
 const geistSans = Geist({
@@ -36,9 +37,12 @@ export default function RootLayout({
           <Providers>
             <AuthGuard>
               <Navigation />
-              <div className="flex">
+              <div className="flex h-[calc(100vh-56px)]">
                 <LeftMenu />
-                <main className="flex-1 bg-gray-50">{children}</main>
+                <main className="flex-1 bg-gray-50 overflow-hidden flex flex-col">
+                  <AppBreadcrumb />
+                  <div className="flex-1 overflow-auto">{children}</div>
+                </main>
               </div>
             </AuthGuard>
           </Providers>

@@ -16,6 +16,10 @@ model User {
   updatedAt DateTime @updatedAt     @map("updated_at")
 
   roles     Role[]   // 多对多：一个用户可以有多个角色
+  jobPostTemplates JobPostTemplate[]
+  jobPosts  JobPost[]
+  applicantInfo ApplicantInformation?
+  applications Application[]
 
   @@map("users")
 }
@@ -49,9 +53,12 @@ model Permission {
 
 // Dictionary 模型 — 字典表
 model Dictionary {
-  id    Int      @id @default(autoincrement())
-  key   String   @unique
-  value String[]
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String[]
+  category  String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("dictionaries")
 }
@@ -70,4 +77,87 @@ model AuditTrail {
 
   @@index([table, recordId])
   @@map("audit_trails")
+}
+
+// JobPostTemplate 模型 — 职位发布模板
+model JobPostTemplate {
+  id           Int      @id @default(autoincrement())
+  templateName String   @map("template_name")
+  fields       Json     @default("[]") // [{title, type, required}]
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt     @map("updated_at")
+
+  userId       Int      @map("user_id")
+  user         User     @relation(fields: [userId], references: [id])
+
+  @@map("job_post_templates")
+}
+
+enum JobPostState {
+  active
+  closed
+}
+
+// JobPost 模型 — 职位发布
+model JobPost {
+  id             Int          @id @default(autoincrement())
+  title          String
+  jobDescription String       @map("job_description")
+  state          JobPostState @default(active)
+  questions      Json     @default("[]") // same as template fields: [{title, type, required, options?}]
+  postedAt       DateTime @default(now()) @map("posted_at")
+  postedBy       String   @map("posted_by")
+  reviewer       String[]   @default([])
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt     @map("updated_at")
+
+  userId         Int      @map("user_id")
+  user           User     @relation(fields: [userId], references: [id])
+
+  applications   Application[]
+
+  @@map("job_posts")
+}
+
+// ApplicantInformation 模型 — 申请人基本信息
+model ApplicantInformation {
+  id        Int      @id @default(autoincrement())
+  email     String
+  phone     String
+  nickname  String
+  country   String
+  state     String
+  address   String
+  postcode  String
+  resume    String   @default("") // file path or URL
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt     @map("updated_at")
+
+  userId    Int      @unique @map("user_id")
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("applicant_information")
+}
+
+enum ApplicationState {
+  applied
+  rejected
+}
+
+// Application 模型 — 职位申请
+model Application {
+  id        Int               @id @default(autoincrement())
+  answers   Json              @default("[]") // 自定义问题的回答: [{title, value}]
+  state     ApplicationState  @default(applied)
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt     @map("updated_at")
+
+  userId    Int               @map("user_id")
+  user      User              @relation(fields: [userId], references: [id])
+
+  jobPostId Int               @map("job_post_id")
+  jobPost   JobPost           @relation(fields: [jobPostId], references: [id])
+
+  @@unique([userId, jobPostId]) // 每个用户每个职位只能申请一次
+  @@map("applications")
 }

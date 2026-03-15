@@ -62,5 +62,6 @@ export async function request<T>(
     throw new ApiError(res.status, error.message ?? '请求失败');
   }
 
-  return res.json() as Promise<T>;
+  const text = await res.text();
+  return (text ? JSON.parse(text) : null) as T;
 }

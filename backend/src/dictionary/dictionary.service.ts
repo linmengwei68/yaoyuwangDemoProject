@@ -12,4 +12,11 @@ export class DictionaryService {
   async findByKey(key: string) {
     return this.prisma.dictionary.findUnique({ where: { key } });
   }
+
+  async findByCategory(category: string) {
+    return this.prisma.dictionary.findMany({
+      where: { category },
+      orderBy: { key: 'asc' },
+    });
+  }
 }
