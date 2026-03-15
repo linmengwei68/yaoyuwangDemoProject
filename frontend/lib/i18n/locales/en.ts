@@ -78,7 +78,7 @@ const en = {
     name_already_exists: 'This role name already exists',
     permissions_required: 'Please select at least one permission',
   },
-} as const;
+};
 
 export type Translations = typeof en;
 export default en;
