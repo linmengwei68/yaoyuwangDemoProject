@@ -73,7 +73,12 @@ export default function PartnerHubColumn({
     // Left the cell — compare value
     const current = editValueRef.current;
     setEditing(false);
-    if (JSON.stringify(current) === JSON.stringify(value)) return;
+    // Normalize original value for comparison (multipleSelection stores objects but edits as strings)
+    let compareValue = value;
+    if (type === 'multipleSelection' && Array.isArray(value) && value.length > 0 && typeof value[0] === 'object') {
+      compareValue = value.map((v: any) => v.value ?? v.name ?? v.label);
+    }
+    if (JSON.stringify(current) === JSON.stringify(compareValue)) return;
     if (!update) return;
     setCellLoading(true);
     update(current)
