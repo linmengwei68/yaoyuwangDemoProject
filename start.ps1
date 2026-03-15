@@ -7,28 +7,26 @@ Write-Host "  PartnerHub - Starting All Services" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-$pgBin = "$PSScriptRoot\.postgres\pgsql\bin"
-$pgData = "$PSScriptRoot\.postgres\data"
-$pgLog = "$PSScriptRoot\.postgres\pg.log"
-
 # 1. 启动 PostgreSQL
 Write-Host "[1/3] Starting PostgreSQL..." -ForegroundColor Yellow
-$pgStatus = & "$pgBin\pg_ctl.exe" -D $pgData status 2>&1
-if ($pgStatus -match "server is running") {
+if (Get-Process -Name postgres -ErrorAction SilentlyContinue) {
     Write-Host "  PostgreSQL already running" -ForegroundColor Green
 } else {
-    & "$pgBin\pg_ctl.exe" -D $pgData -l $pgLog start 2>&1 | Out-Null
+    Push-Location "$PSScriptRoot\.postgres\pgsql\bin"
+    cmd /c "pg_ctl.exe start -D `"$PSScriptRoot\.postgres\data`" -l `"$PSScriptRoot\.postgres\pg.log`""
+    Pop-Location
+    Start-Sleep -Seconds 2
     Write-Host "  PostgreSQL started on port 5432" -ForegroundColor Green
 }
 
-# 2. 启动后端
+# 2. 启动后端（热重载模式）
 Write-Host "[2/3] Starting Backend (Nest.js)..." -ForegroundColor Yellow
-Start-Process -NoNewWindow -FilePath "cmd.exe" -ArgumentList "/c cd /d `"$PSScriptRoot\backend`" && npm run start:dev" -PassThru | Out-Null
+Start-Process cmd -ArgumentList "/c cd /d `"$PSScriptRoot\backend`" && npm run start:dev" -WindowStyle Hidden
 Write-Host "  Backend starting on http://localhost:3001" -ForegroundColor Green
 
-# 3. 启动前端
+# 3. 启动前端（热重载模式）
 Write-Host "[3/3] Starting Frontend (Next.js)..." -ForegroundColor Yellow
-Start-Process -NoNewWindow -FilePath "cmd.exe" -ArgumentList "/c cd /d `"$PSScriptRoot\frontend`" && npm run dev" -PassThru | Out-Null
+Start-Process cmd -ArgumentList "/c cd /d `"$PSScriptRoot\frontend`" && npm run dev" -WindowStyle Hidden
 Write-Host "  Frontend starting on http://localhost:3000" -ForegroundColor Green
 
 Write-Host ""
@@ -38,13 +36,3 @@ Write-Host "  Frontend:  http://localhost:3000" -ForegroundColor White
 Write-Host "  Backend:   http://localhost:3001" -ForegroundColor White
 Write-Host "  Health:    http://localhost:3001/api/health" -ForegroundColor White
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "Press Ctrl+C to stop all services" -ForegroundColor DarkGray
-
-# 等待用户按 Ctrl+C
-try { while ($true) { Start-Sleep -Seconds 60 } }
-finally {
-    Write-Host "`nStopping PostgreSQL..." -ForegroundColor Yellow
-    & "$pgBin\pg_ctl.exe" -D $pgData stop 2>&1 | Out-Null
-    Write-Host "All services stopped." -ForegroundColor Green
-}

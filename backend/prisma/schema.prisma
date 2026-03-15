@@ -7,13 +7,67 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 最简单的模型，用于验证数据库连接
+// User 模型 — 对应数据库中的 users 表
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
-  name      String?
+  password  String
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedAt DateTime @updatedAt     @map("updated_at")
+
+  roles     Role[]   // 多对多：一个用户可以有多个角色
 
   @@map("users")
+}
+
+// Role 模型 — 角色表
+model Role {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique  // 角色名，如 "admin", "editor"
+  description String?               // 角色描述
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt     @map("updated_at")
+
+  users       User[]       // 多对多：一个角色可以分配给多个用户
+  permissions Permission[] // 多对多：一个角色可以有多个权限
+
+  @@map("roles")
+}
+
+// Permission 模型 — 权限表
+model Permission {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique  // 权限名，如 "user:read", "user:write"
+  description String?           // 权限描述
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt     @map("updated_at")
+
+  roles       Role[]   // 多对多：一个权限可以属于多个角色
+
+  @@map("permissions")
+}
+
+// Dictionary 模型 — 字典表
+model Dictionary {
+  id    Int      @id @default(autoincrement())
+  key   String   @unique
+  value String[]
+
+  @@map("dictionaries")
+}
+
+// AuditTrail 模型 — 审计日志表
+model AuditTrail {
+  id        Int      @id @default(autoincrement())
+  table     String
+  recordId  Int      @map("record_id")
+  field     String
+  oldValue  String?  @map("old_value")
+  newValue  String?  @map("new_value")
+  userId    Int      @map("user_id")
+  userEmail String   @map("user_email")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([table, recordId])
+  @@map("audit_trails")
 }
