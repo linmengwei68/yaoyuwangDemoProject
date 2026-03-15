@@ -1,5 +1,6 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { ApplicationAnswer } from '../common/types';
 
 @Injectable()
@@ -13,7 +14,9 @@ export class ApplicationService {
     if (existing) {
       throw new ConflictException('You have already applied to this post');
     }
-    return this.prisma.application.create({ data });
+    return this.prisma.application.create({
+      data: { ...data, answers: data.answers as unknown as Prisma.InputJsonValue },
+    });
   }
 
   async findByUserAndPost(userId: number, jobPostId: number) {

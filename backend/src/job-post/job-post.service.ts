@@ -66,9 +66,13 @@ export class JobPostService {
     reviewer: string;
     userId: number;
   }) {
-    const { reviewer, ...rest } = data;
+    const { reviewer, questions, ...rest } = data;
     return this.prisma.jobPost.create({
-      data: { ...rest, reviewer: reviewer ? [reviewer] : [] },
+      data: {
+        ...rest,
+        questions: questions as unknown as Prisma.InputJsonValue,
+        reviewer: reviewer ? [reviewer] : [],
+      },
     });
   }
 
