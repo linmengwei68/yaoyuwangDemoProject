@@ -8,8 +8,8 @@ export default function RolesPage() {
   const [permissionOptions, setPermissionOptions] = useState<{ label: string; value: string }[]>([]);
 
   useEffect(() => {
-    apiGetPermissions().then((perms) => {
-      setPermissionOptions(perms.map((p) => ({ label: p.name, value: p.name })));
+    apiGetPermissions().then((result) => {
+      setPermissionOptions(result.list.map((p) => ({ label: p.name, value: p.name })));
     }).catch(() => {});
   }, []);
 
