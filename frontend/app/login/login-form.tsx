@@ -22,7 +22,7 @@ export default function LoginForm({ rolesWithPermissions }: Props) {
   const t = useT();
   const { message } = App.useApp();
   const [loading, setLoading] = useState(false);
-  const emailCheckTimer = useRef<ReturnType<typeof setTimeout>>();
+  const emailCheckTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const cardRef = useRef<HTMLDivElement>(null);
   const [tourOpen, setTourOpen] = useState(false);
 
