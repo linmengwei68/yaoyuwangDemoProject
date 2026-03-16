@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+'use client';
+
 import "./globals.css";
 import Providers from "./providers";
 import AuthGuard from "@/components/common/auth-guard";
@@ -8,21 +8,6 @@ import LeftMenu from "@/components/layout/left-menu";
 import AppBreadcrumb from "@/components/layout/breadcrumb";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-export const metadata: Metadata = {
-  title: "PartnerHub",
-  description: "PartnerHub - Full-stack project",
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,9 +15,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <head>
+        <title>PartnerHub</title>
+        <meta name="description" content="PartnerHub - Full-stack project" />
+      </head>
+      <body className="antialiased">
         <AntdRegistry>
           <Providers>
             <AuthGuard>
