@@ -1,8 +1,17 @@
-import { serverGetPermissions } from '@/api/permissions';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { apiGetPermissions } from '@/api/permissions';
 import RolesClient from './roles-client';
 
-export default async function RolesPage() {
-  const permissions = await serverGetPermissions();
-  const permissionOptions = permissions.map((p) => ({ label: p.name, value: p.name }));
+export default function RolesPage() {
+  const [permissionOptions, setPermissionOptions] = useState<{ label: string; value: string }[]>([]);
+
+  useEffect(() => {
+    apiGetPermissions().then((perms) => {
+      setPermissionOptions(perms.map((p) => ({ label: p.name, value: p.name })));
+    }).catch(() => {});
+  }, []);
+
   return <RolesClient permissionOptions={permissionOptions} />;
 }
