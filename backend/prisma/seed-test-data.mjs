@@ -100,6 +100,16 @@ function generateQuestions() {
 }
 
 async function main() {
+  // Idempotency: skip if test data already exists
+  const existing = await prisma.user.findUnique({ where: { email: 'testowner1@test.com' } });
+  if (existing) {
+    const postCount = await prisma.jobPost.count({ where: { userId: existing.id } });
+    if (postCount > 0) {
+      console.log('Test data already exists, skipping seed-test-data.');
+      return;
+    }
+  }
+
   const role = await prisma.role.findUnique({ where: { name: 'Project Owner' } });
   if (!role) {
     console.error('Role "Project Owner" not found. Run the base seed first.');
