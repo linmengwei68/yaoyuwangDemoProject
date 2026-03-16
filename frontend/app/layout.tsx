@@ -1,5 +1,4 @@
-'use client';
-
+import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "./providers";
 import AuthGuard from "@/components/common/auth-guard";
@@ -8,6 +7,11 @@ import LeftMenu from "@/components/layout/left-menu";
 import AppBreadcrumb from "@/components/layout/breadcrumb";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 
+export const metadata: Metadata = {
+  title: "PartnerHub",
+  description: "PartnerHub - Full-stack project",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -15,10 +19,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <title>PartnerHub</title>
-        <meta name="description" content="PartnerHub - Full-stack project" />
-      </head>
       <body className="antialiased">
         <AntdRegistry>
           <Providers>

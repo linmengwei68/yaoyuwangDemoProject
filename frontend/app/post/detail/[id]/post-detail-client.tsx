@@ -17,12 +17,12 @@ import DataTable, {
 
 const { Title, Paragraph } = Typography;
 
-export default function PostDetailClient() {
+export default function PostDetailClient({ postId: propPostId }: { postId?: number }) {
   const t = useT();
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
-  const postId = Number(params.id);
+  const postId = propPostId ?? Number(params.id);
   const initialFilterRef = useRef(searchParams.get('filter'));
 
   useEffect(() => {

@@ -8,11 +8,11 @@ import { useT } from '@/lib/i18n';
 import { apiGetTemplatesByUser, type JobPostTemplate } from '@/api/job-post-template';
 import { formatDate, checkPermissionCode } from '@/lib/utils';
 
-export default function TemplateClient() {
+export default function TemplateClient({ userId: propUserId }: { userId?: number }) {
   const t = useT();
   const params = useParams();
   const router = useRouter();
-  const userId = Number(params.id);
+  const userId = propUserId ?? Number(params.id);
   const [templates, setTemplates] = useState<JobPostTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const canEdit = checkPermissionCode('template-edit');
