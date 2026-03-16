@@ -1,23 +1,35 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Button, Dropdown, Space } from 'antd';
-import { UserOutlined, LogoutOutlined, IdcardOutlined } from '@ant-design/icons';
+import { usePathname, useRouter } from 'next/navigation';
+import { Button, Dropdown, Space, Badge, Modal } from 'antd';
+import { UserOutlined, LogoutOutlined, IdcardOutlined, BellOutlined, QuestionCircleOutlined, ReadOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { useAppStore } from '@/lib/store';
 import { logout } from '@/api/auth';
 import { useT, useI18nStore } from '@/lib/i18n';
+import { apiGetNotifications, apiMarkNotificationReviewed } from '@/api/notification';
+import type { Notification } from '@/api/notification';
 import PersonalInfoDialog from '@/components/common/personal-info-dialog';
 
 const NO_NAV_PATHS = ['/login', '/register'];
 
 export default function Navigation() {
   const pathname = usePathname();
+  const router = useRouter();
   const currentUser = useAppStore((s) => s.currentUser);
   const t = useT();
   const { locale, setLocale } = useI18nStore();
   const [personalInfoOpen, setPersonalInfoOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [helpPage, setHelpPage] = useState(0);
+
+  useEffect(() => {
+    if (currentUser) {
+      apiGetNotifications().then(setNotifications).catch(() => {});
+    }
+  }, [currentUser]);
 
   if (NO_NAV_PATHS.includes(pathname)) return null;
 
@@ -45,8 +57,30 @@ export default function Navigation() {
       <Link href="/" className="font-semibold text-gray-800 hover:text-blue-600 transition-colors">
         PartnerHub
       </Link>
-      <Space size={12} align="center">
-        <Space size={6}>
+      <Space size={16} align="center">
+        <Button
+          size="small"
+          type="text"
+          icon={<QuestionCircleOutlined />}
+          onClick={() => {
+            localStorage.removeItem('partnerhub_tour_seen_applicant');
+            localStorage.removeItem('partnerhub_tour_seen_owner');
+            localStorage.removeItem('partnerhub_tour_seen_login');
+            localStorage.removeItem('partnerhub_tour_seen_admin');
+            window.location.href = window.location.pathname.startsWith('/admin/') ? window.location.pathname : '/';
+          }}
+        >
+          {t.tour.guide}
+        </Button>
+        <Button
+          size="small"
+          type="text"
+          icon={<ReadOutlined />}
+          onClick={() => { setHelpPage(0); setHelpOpen(true); }}
+        >
+          {t.help.btn}
+        </Button>
+        <Space size={4}>
           <Button
             size="small"
             type={locale === 'en' ? 'primary' : 'default'}
@@ -63,17 +97,78 @@ export default function Navigation() {
           </Button>
         </Space>
         {currentUser && (
-          <Dropdown menu={{ items: menuItems }} placement="bottomRight" trigger={['click']}>
-            <Button type="text" icon={<UserOutlined />}>
-              {currentUser.email}
-            </Button>
-          </Dropdown>
+          <>
+            <Dropdown
+              menu={{
+                items: notifications.map((n) => ({
+                  key: n.id,
+                  label: (
+                    <span style={{ color: n.reviewed ? '#999' : undefined }}>
+                      {n.message}
+                    </span>
+                  ),
+                  onClick: async () => {
+                    if (!n.reviewed) {
+                      await apiMarkNotificationReviewed(n.id);
+                      setNotifications((prev) => prev.map((item) => item.id === n.id ? { ...item, reviewed: true } : item));
+                    }
+                    if (n.url) router.push(n.url);
+                  },
+                })),
+              }}
+              placement="bottomRight"
+              trigger={['click']}
+            >
+              <Badge count={notifications.filter((n) => !n.reviewed).length} size="small" offset={[-4, 4]}>
+                <Button type="text" icon={<BellOutlined style={{ fontSize: 18 }} />} style={{ padding: '4px 8px' }} />
+              </Badge>
+            </Dropdown>
+            <Dropdown menu={{ items: menuItems }} placement="bottomRight" trigger={['click']}>
+              <Button type="text" icon={<UserOutlined />}>
+                {currentUser.email}
+              </Button>
+            </Dropdown>
+          </>
         )}
       </Space>
     </nav>
     {isApplicantOnly && (
       <PersonalInfoDialog open={personalInfoOpen} onClose={() => setPersonalInfoOpen(false)} />
     )}
+    <Modal
+      title={t.help.pages[helpPage]?.title}
+      open={helpOpen}
+      onCancel={() => setHelpOpen(false)}
+      footer={
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Button
+            icon={<LeftOutlined />}
+            disabled={helpPage === 0}
+            onClick={() => setHelpPage((p) => p - 1)}
+          >
+            {t.tour.prev}
+          </Button>
+          <span style={{ color: '#999' }}>{helpPage + 1} / {t.help.pages.length}</span>
+          {helpPage < t.help.pages.length - 1 ? (
+            <Button
+              type="primary"
+              onClick={() => setHelpPage((p) => p + 1)}
+            >
+              {t.tour.next} <RightOutlined />
+            </Button>
+          ) : (
+            <Button type="primary" onClick={() => setHelpOpen(false)}>
+              {t.tour.finish}
+            </Button>
+          )}
+        </div>
+      }
+      width={640}
+    >
+      <div style={{ whiteSpace: 'pre-line', lineHeight: 1.8, fontSize: 14, maxHeight: 480, overflow: 'auto' }}>
+        {t.help.pages[helpPage]?.content}
+      </div>
+    </Modal>
     </>
   );
 }

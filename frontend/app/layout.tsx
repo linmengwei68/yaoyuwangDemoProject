@@ -39,7 +39,7 @@ export default function RootLayout({
               <Navigation />
               <div className="flex h-[calc(100vh-56px)]">
                 <LeftMenu />
-                <main className="flex-1 bg-gray-50 overflow-hidden flex flex-col">
+                <main className="flex-1 bg-white overflow-hidden flex flex-col">
                   <AppBreadcrumb />
                   <div className="flex-1 overflow-auto">{children}</div>
                 </main>

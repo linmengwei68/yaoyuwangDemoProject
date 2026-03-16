@@ -23,6 +23,14 @@ async function main() {
 
   console.log('Seeded dictionary: roleoptions');
 
+  await prisma.dictionary.upsert({
+    where: { key: 'poststate' },
+    update: { value: ['active', 'closed'] },
+    create: { key: 'poststate', value: ['active', 'closed'] },
+  });
+
+  console.log('Seeded dictionary: poststate');
+
   // Seed permissions and assign to Admin role
   const permissions = [
     'create-permission',
@@ -34,6 +42,7 @@ async function main() {
     'template-edit',
     'edit-dictionary',
     'post-edit',
+    'post-view',
   ];
 
   for (const name of permissions) {
@@ -46,6 +55,14 @@ async function main() {
         name,
         roles: { connect: { name: 'Admin' } },
       },
+    });
+  }
+
+  // Assign post-view and post-edit to Project Owner
+  for (const perm of ['post-view', 'post-edit', 'template-edit']) {
+    await prisma.permission.update({
+      where: { name: perm },
+      data: { roles: { connect: { name: 'Project Owner' } } },
     });
   }
 

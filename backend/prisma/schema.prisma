@@ -20,6 +20,7 @@ model User {
   jobPosts  JobPost[]
   applicantInfo ApplicantInformation?
   applications Application[]
+  notifications Notification[]
 
   @@map("users")
 }
@@ -108,6 +109,7 @@ model JobPost {
   postedAt       DateTime @default(now()) @map("posted_at")
   postedBy       String   @map("posted_by")
   reviewer       String[]   @default([])
+  collector      Int[]      @default([])  // user IDs who collected/favorited this post
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt     @map("updated_at")
 
@@ -142,6 +144,7 @@ model ApplicantInformation {
 enum ApplicationState {
   applied
   rejected
+  reviewed
 }
 
 // Application 模型 — 职位申请
@@ -160,4 +163,19 @@ model Application {
 
   @@unique([userId, jobPostId]) // 每个用户每个职位只能申请一次
   @@map("applications")
+}
+
+// Notification 模型 — 通知
+model Notification {
+  id        Int      @id @default(autoincrement())
+  message   String
+  url       String   @default("")
+  reviewed  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt     @map("updated_at")
+
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
 }

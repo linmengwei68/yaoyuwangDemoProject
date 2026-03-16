@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Form, Input, Button, Tabs, Checkbox, App } from 'antd';
+import { Form, Input, Button, Tabs, Checkbox, App, Tour } from 'antd';
 import { apiLogin, apiRegister, apiCheckEmailExists, fetchCurrentUser } from '@/api/auth';
 import { useT } from '@/lib/i18n';
+
+const TOUR_KEY = 'partnerhub_tour_seen_login';
 
 export interface RoleWithPermissions {
   role: string;
@@ -20,6 +22,16 @@ export default function LoginForm({ rolesWithPermissions }: Props) {
   const t = useT();
   const { message } = App.useApp();
   const [loading, setLoading] = useState(false);
+  const emailCheckTimer = useRef<ReturnType<typeof setTimeout>>();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [tourOpen, setTourOpen] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem(TOUR_KEY)) {
+      const timer = setTimeout(() => setTourOpen(true), 800);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
 
   async function onSignIn(values: { email: string; password: string }) {
@@ -29,7 +41,8 @@ export default function LoginForm({ rolesWithPermissions }: Props) {
       sessionStorage.setItem('access_token', access_token);
       await fetchCurrentUser();
       const params = new URLSearchParams(window.location.search);
-      router.replace(params.get('redirect') ?? '/');
+      const redirect = params.get('redirect');
+      router.replace(redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/');
     } catch {
       message.error(t.auth.login_failed);
     } finally {
@@ -46,7 +59,8 @@ export default function LoginForm({ rolesWithPermissions }: Props) {
       sessionStorage.setItem('access_token', access_token);
       await fetchCurrentUser();
       const params = new URLSearchParams(window.location.search);
-      router.replace(params.get('redirect') ?? '/');
+      const redirect = params.get('redirect');
+      router.replace(redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/');
     } catch {
       message.error(t.auth.register_failed);
     } finally {
@@ -91,10 +105,18 @@ export default function LoginForm({ rolesWithPermissions }: Props) {
           { required: true, message: t.auth.email_required },
           { type: 'email', message: t.auth.email_invalid },
           {
-            validator: async (_, value) => {
-              if (!value || !/\S+@\S+\.\S+/.test(value)) return;
-              const { exists } = await apiCheckEmailExists(value);
-              if (exists) return Promise.reject(new Error(t.auth.email_already_exists));
+            validator: (_, value) => {
+              if (!value || !/\S+@\S+\.\S+/.test(value)) return Promise.resolve();
+              return new Promise<void>((resolve, reject) => {
+                clearTimeout(emailCheckTimer.current);
+                emailCheckTimer.current = setTimeout(async () => {
+                  try {
+                    const { exists } = await apiCheckEmailExists(value);
+                    if (exists) reject(new Error(t.auth.email_already_exists));
+                    else resolve();
+                  } catch { resolve(); }
+                }, 500);
+              });
             },
           },
         ]}
@@ -149,7 +171,7 @@ export default function LoginForm({ rolesWithPermissions }: Props) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white p-10 rounded-2xl shadow-md w-full max-w-sm">
+      <div ref={cardRef} className="bg-white p-10 rounded-2xl shadow-md w-full max-w-sm">
         <h1 className="text-2xl font-semibold text-center mb-6">PartnerHub</h1>
         <Tabs
           defaultActiveKey="signin"
@@ -157,6 +179,30 @@ export default function LoginForm({ rolesWithPermissions }: Props) {
           items={[
             { key: 'signin', label: t.auth.sign_in, children: signInForm },
             { key: 'signup', label: t.auth.sign_up, children: signUpForm },
+          ]}
+        />
+        <Tour
+          open={tourOpen}
+          onClose={() => {
+            setTourOpen(false);
+            localStorage.setItem(TOUR_KEY, '1');
+          }}
+          steps={[
+            {
+              title: t.auth.sign_in,
+              description: t.tour.login_tabs,
+              target: () => cardRef.current!,
+            },
+            {
+              title: t.auth.sign_up,
+              description: t.tour.login_form,
+              target: () => cardRef.current!,
+            },
+            {
+              title: t.auth.roles_label,
+              description: t.tour.login_roles,
+              target: () => cardRef.current!,
+            },
           ]}
         />
       </div>

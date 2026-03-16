@@ -23,6 +23,14 @@ async function main() {
 
   console.log('Seeded dictionary: roleoptions');
 
+  await prisma.dictionary.upsert({
+    where: { key: 'poststate' },
+    update: { value: ['active', 'closed'] },
+    create: { key: 'poststate', value: ['active', 'closed'] },
+  });
+
+  console.log('Seeded dictionary: poststate');
+
   // Seed permissions and assign to Admin role
   const permissions = [
     'create-permission',

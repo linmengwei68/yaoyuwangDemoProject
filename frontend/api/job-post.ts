@@ -10,7 +10,9 @@ export interface JobPost {
   postedAt: string;
   postedBy: string;
   reviewer: string[];
+  collector: number[];
   userId: number;
+  appliedCount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -19,6 +21,9 @@ export interface GetJobPostListParams {
   title?: string;
   filterStates?: string;
   filterPostedDates?: string;
+  filter?: 'all' | 'collected' | 'applied' | 'my';
+  sortField?: string;
+  sortOrder?: 'asc' | 'desc';
   page?: number;
   pageSize?: number;
 }
@@ -35,6 +40,9 @@ export function apiGetJobPostList(params: GetJobPostListParams = {}) {
   if (params.title) query.set('title', params.title);
   if (params.filterStates) query.set('filterStates', params.filterStates);
   if (params.filterPostedDates) query.set('filterPostedDates', params.filterPostedDates);
+  if (params.filter) query.set('filter', params.filter);
+  if (params.sortField) query.set('sortField', params.sortField);
+  if (params.sortOrder) query.set('sortOrder', params.sortOrder);
   if (params.page != null) query.set('page', String(params.page));
   if (params.pageSize != null) query.set('pageSize', String(params.pageSize));
   const qs = query.toString();
@@ -59,4 +67,19 @@ export async function apiCreateJobPost(data: {
 
 export function apiAddReviewer(id: number) {
   return request<JobPost>(`/api/job-posts/${id}/reviewers`, { method: 'PATCH' });
+}
+
+export function apiToggleCollector(id: number) {
+  return request<JobPost>(`/api/job-posts/${id}/collector`, { method: 'PATCH' });
+}
+
+export function apiUpdateJobPost(id: number, data: Record<string, any>) {
+  return request<JobPost>(`/api/job-posts/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export function apiDeleteJobPost(id: number) {
+  return request<void>(`/api/job-posts/${id}`, { method: 'DELETE' });
 }

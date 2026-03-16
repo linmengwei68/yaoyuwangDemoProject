@@ -1,12 +1,14 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu } from 'antd';
+import { Menu, Tour } from 'antd';
 import { HomeOutlined, TeamOutlined } from '@ant-design/icons';
 import { useAppStore } from '@/lib/store';
 import { useT } from '@/lib/i18n';
 
 const NO_MENU_PATHS = ['/login', '/register'];
+const TOUR_KEY = 'partnerhub_tour_seen_admin';
 
 export default function LeftMenu() {
   const pathname = usePathname();
@@ -15,6 +17,16 @@ export default function LeftMenu() {
   const currentUser = useAppStore((s) => s.currentUser);
 
   const isAdmin = currentUser?.roles.some((r) => r.name === 'Admin') ?? false;
+
+  const menuRef = useRef<HTMLElement>(null);
+  const [tourOpen, setTourOpen] = useState(false);
+
+  useEffect(() => {
+    if (isAdmin && pathname.startsWith('/admin/') && !localStorage.getItem(TOUR_KEY)) {
+      const timer = setTimeout(() => setTourOpen(true), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [isAdmin, pathname]);
 
   if (NO_MENU_PATHS.includes(pathname) || !isAdmin) return null;
 
@@ -40,7 +52,7 @@ export default function LeftMenu() {
   const openKeys = pathname.startsWith('/admin/') ? ['user-management'] : [];
 
   return (
-    <aside className="w-52 min-h-[calc(100vh-56px)] border-r border-gray-200 bg-white shrink-0 pt-3">
+    <aside ref={menuRef} className="w-52 min-h-[calc(100vh-56px)] border-r border-gray-200 bg-white shrink-0 pt-3">
       <Menu
         mode="inline"
         selectedKeys={[pathname]}
@@ -49,6 +61,45 @@ export default function LeftMenu() {
         onClick={({ key }) => router.push(key)}
         className="h-full border-r-0"
         style={{ paddingInline: 6 }}
+      />
+      <Tour
+        open={tourOpen}
+        onClose={() => {
+          setTourOpen(false);
+          localStorage.setItem(TOUR_KEY, '1');
+        }}
+        steps={[
+          {
+            title: t.tour.perm_flow_title,
+            description: t.tour.perm_flow_intro,
+            target: () => menuRef.current!,
+          },
+          {
+            title: t.nav.users,
+            description: t.tour.perm_flow_users,
+            target: () => menuRef.current!,
+          },
+          {
+            title: t.nav.roles,
+            description: t.tour.perm_flow_roles,
+            target: () => menuRef.current!,
+          },
+          {
+            title: t.nav.permissions,
+            description: t.tour.perm_flow_permissions,
+            target: () => menuRef.current!,
+          },
+          {
+            title: t.nav.dictionary,
+            description: t.tour.perm_flow_dictionary,
+            target: () => menuRef.current!,
+          },
+          {
+            title: t.tour.perm_flow_title,
+            description: t.tour.perm_flow_audit,
+            target: () => menuRef.current!,
+          },
+        ]}
       />
     </aside>
   );

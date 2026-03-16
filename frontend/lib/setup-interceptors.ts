@@ -52,7 +52,7 @@ addRequestInterceptor((config) => {
 
 // 响应拦截器：401 登出（防重复）+ 成功时按冷却时间刷新 token
 addResponseInterceptor(async (res, endpoint) => {
-  if (res.status === 401) {
+  if (res.status === 401 && !SKIP_REFRESH_ENDPOINTS.includes(endpoint)) {
     if (!isLoggingOut) {
       isLoggingOut = true;
       const t = getT();

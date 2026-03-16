@@ -14,6 +14,7 @@ import { JobPostModule } from './job-post/job-post.module';
 import { ApplicantInfoModule } from './applicant-info/applicant-info.module';
 import { UploadModule } from './upload/upload.module';
 import { ApplicationModule } from './application/application.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ApplicationModule } from './application/application.module';
     ApplicantInfoModule,
     UploadModule,
     ApplicationModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
